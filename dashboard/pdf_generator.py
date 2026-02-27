@@ -4,36 +4,49 @@ import io
 from datetime import date
 from typing import Dict
 
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import cm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from metrics_engine import CutMetrics
-from utils import grouped_bar_chart, horizontal_bar_chart
 
-ACCENT_BLUE = "#2563EB"
-TEXT_PRIMARY = "#111827"
-TEXT_SECONDARY = "#6B7280"
-GRID_LIGHT = "#E5E7EB"
+ACCENT_BLUE = colors.HexColor("#2563EB")
+TEXT_PRIMARY = colors.HexColor("#111827")
+TEXT_SECONDARY = colors.HexColor("#6B7280")
 
 
-def _img_from_bytes(png_bytes: bytes):
-    return plt.imread(io.BytesIO(png_bytes))
+def _section_title(text: str):
+    return Paragraph(text, ParagraphStyle(name="section", fontSize=14, textColor=ACCENT_BLUE, spaceAfter=8))
 
 
-def _add_footer(fig, generated_date: str):
-    fig.text(0.5, 0.02, f"Generated on {generated_date}", ha="center", fontsize=9, color=TEXT_SECONDARY)
+def _small_title(text: str):
+    return Paragraph(text, ParagraphStyle(name="small", fontSize=11, textColor=TEXT_PRIMARY, spaceAfter=4))
 
 
-def _table_text(rows, col_labels, x, y, row_height=0.03, col_widths=None, font_size=9):
-    if col_widths is None:
-        col_widths = [0.2] * len(col_labels)
-    for i, label in enumerate(col_labels):
-        plt.gcf().text(x + sum(col_widths[:i]), y, label, fontsize=font_size, color=TEXT_PRIMARY, weight="bold")
-    y -= row_height
-    for row in rows:
-        for i, cell in enumerate(row):
-            plt.gcf().text(x + sum(col_widths[:i]), y, str(cell), fontsize=font_size, color=TEXT_SECONDARY)
-        y -= row_height
+def _paragraph(text: str):
+    return Paragraph(text, ParagraphStyle(name="body", fontSize=9, textColor=TEXT_SECONDARY, leading=12))
+
+
+def _table(data, col_widths):
+    table = Table(data, colWidths=col_widths)
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.white),
+                ("TEXTCOLOR", (0, 0), (-1, 0), TEXT_PRIMARY),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, 0), 9),
+                ("FONTSIZE", (0, 1), (-1, -1), 9),
+                ("TEXTCOLOR", (0, 1), (-1, -1), TEXT_SECONDARY),
+                ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.lightgrey),
+                ("LINEBELOW", (0, 1), (-1, -1), 0.25, colors.lightgrey),
+                ("ALIGN", (1, 0), (-1, -1), "LEFT"),
+            ]
+        )
+    )
+    return table
 
 
 def generate_commissioner_report(
@@ -44,110 +57,68 @@ def generate_commissioner_report(
     divergence_series,
     momentum_tables,
 ) -> bytes:
-    generated_date = date.today().isoformat()
     buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=2 * cm, rightMargin=2 * cm, topMargin=2 * cm)
+    styles = getSampleStyleSheet()
 
-    with PdfPages(buffer) as pdf:
-        # Title Page
-        fig = plt.figure(figsize=(8.27, 11.69), facecolor="white")
-        fig.text(0.1, 0.85, "Industrial Identity Intelligence", fontsize=24, color=TEXT_PRIMARY, weight="bold")
-        fig.text(0.1, 0.80, "Commissioner Report", fontsize=14, color=TEXT_SECONDARY)
-        _add_footer(fig, generated_date)
-        pdf.savefig(fig)
-        plt.close(fig)
+    story = []
+    story.append(Paragraph("Industrial Identity Intelligence", styles["Title"]))
+    story.append(Paragraph("Commissioner Report", styles["Heading2"]))
+    story.append(Spacer(1, 12))
 
-        # Executive Summary
-        fig = plt.figure(figsize=(8.27, 11.69), facecolor="white")
-        fig.text(0.1, 0.92, "Executive Summary", fontsize=16, color=ACCENT_BLUE, weight="bold")
-        y = 0.86
-        for cut in ["total", "mandoli", "gandhinagar"]:
-            summary = summaries.get(cut, "")
-            fig.text(0.1, y, cut.title(), fontsize=12, color=TEXT_PRIMARY, weight="bold")
-            fig.text(0.1, y - 0.03, summary, fontsize=10, color=TEXT_SECONDARY)
-            y -= 0.12
-        _add_footer(fig, generated_date)
-        pdf.savefig(fig)
-        plt.close(fig)
+    story.append(_section_title("Executive Summary"))
+    for cut in ["total", "mandoli", "gandhinagar"]:
+        story.append(_small_title(cut.title()))
+        story.append(_paragraph(summaries.get(cut, "")))
+        story.append(Spacer(1, 6))
 
-        # Identity Snapshot Tables + charts
-        fig = plt.figure(figsize=(8.27, 11.69), facecolor="white")
-        fig.text(0.1, 0.92, "Identity Snapshot", fontsize=16, color=ACCENT_BLUE, weight="bold")
-        y = 0.84
-        for cut in ["total", "mandoli", "gandhinagar"]:
-            cdf = df[df["cut"] == cut].sort_values("chapter_share_y3", ascending=False).head(5)
-            labels = cdf["chapter_name"].tolist()
-            values = (cdf["chapter_share_y3"] * 100).tolist()
-            chart = _img_from_bytes(horizontal_bar_chart(labels, values, highlight_index=0))
-            ax = fig.add_axes([0.1, y - 0.08, 0.8, 0.12])
-            ax.imshow(chart)
-            ax.axis("off")
-            fig.text(0.1, y + 0.05, cut.title(), fontsize=12, color=TEXT_PRIMARY, weight="bold")
-            y -= 0.22
-        _add_footer(fig, generated_date)
-        pdf.savefig(fig)
-        plt.close(fig)
+    story.append(Spacer(1, 12))
+    story.append(_section_title("Identity Snapshot Tables"))
+    for cut in ["total", "mandoli", "gandhinagar"]:
+        cdf = df[df["cut"] == cut].sort_values("chapter_share_y3", ascending=False).head(5)
+        data = [["Chapter", "Share %"]]
+        for _, row in cdf.iterrows():
+            data.append([row["chapter_name"], f"{row['chapter_share_y3']*100:.2f}%"])
+        story.append(_small_title(cut.title()))
+        story.append(_table(data, [9 * cm, 3 * cm]))
+        story.append(Spacer(1, 8))
 
-        # Divergence Table
-        fig = plt.figure(figsize=(8.27, 11.69), facecolor="white")
-        fig.text(0.1, 0.92, "Divergence & Specialization", fontsize=16, color=ACCENT_BLUE, weight="bold")
-        chart = _img_from_bytes(grouped_bar_chart(divergence_labels, divergence_series))
-        ax = fig.add_axes([0.1, 0.55, 0.8, 0.25])
-        ax.imshow(chart)
-        ax.axis("off")
-        _add_footer(fig, generated_date)
-        pdf.savefig(fig)
-        plt.close(fig)
-
-        # Structural Momentum Summary
-        fig = plt.figure(figsize=(8.27, 11.69), facecolor="white")
-        fig.text(0.1, 0.92, "Structural Momentum", fontsize=16, color=ACCENT_BLUE, weight="bold")
-        sections = [
-            ("Fastest Growing", momentum_tables["fastest"]),
-            ("Declining Anchors", momentum_tables["declining"]),
-            ("High Volatility Large Chapters", momentum_tables["volatile"]),
-        ]
-        y = 0.84
-        for title, table in sections:
-            fig.text(0.1, y, title, fontsize=12, color=TEXT_PRIMARY, weight="bold")
-            rows = []
-            for _, row in table.iterrows():
-                rows.append(
-                    [
-                        row["chapter_name"],
-                        f"{row['chapter_share_y3']*100:.2f}%",
-                        f"{row['chapter_cagr_3yr']*100:.2f}%",
-                        f"{row['chapter_cv_volatility']:.2f}",
-                    ]
-                )
-            _table_text(
-                rows,
-                ["Chapter", "Share", "CAGR", "CV"],
-                x=0.1,
-                y=y - 0.04,
-                row_height=0.028,
-                col_widths=[0.45, 0.15, 0.15, 0.1],
+    story.append(Spacer(1, 12))
+    story.append(_section_title("Structural Momentum Summary"))
+    sections = [
+        ("Fastest Growing", momentum_tables["fastest"]),
+        ("Declining Anchors", momentum_tables["declining"]),
+        ("High Volatility Large Chapters", momentum_tables["volatile"]),
+    ]
+    for title, table in sections:
+        data = [["Chapter", "Share", "CAGR", "CV"]]
+        for _, row in table.iterrows():
+            data.append(
+                [
+                    row["chapter_name"],
+                    f"{row['chapter_share_y3']*100:.2f}%",
+                    f"{row['chapter_cagr_3yr']*100:.2f}%",
+                    f"{row['chapter_cv_volatility']:.2f}",
+                ]
             )
-            y -= 0.23
-        _add_footer(fig, generated_date)
-        pdf.savefig(fig)
-        plt.close(fig)
+        story.append(_small_title(title))
+        story.append(_table(data, [7 * cm, 2 * cm, 2 * cm, 2 * cm]))
+        story.append(Spacer(1, 8))
 
-        # Key Observations
-        fig = plt.figure(figsize=(8.27, 11.69), facecolor="white")
-        fig.text(0.1, 0.92, "Key Observations", fontsize=16, color=ACCENT_BLUE, weight="bold")
-        y = 0.86
-        for cut in ["total", "mandoli", "gandhinagar"]:
-            metrics = metrics_by_cut[cut]
-            obs = (
-                f"{cut.title()}: {metrics.structure_type}, "
-                f"Top-3 share {metrics.top_3_share_sum:.1f}%, "
-                f"Weighted CAGR {metrics.weighted_cagr*100:.1f}%."
-            )
-            fig.text(0.1, y, obs, fontsize=11, color=TEXT_SECONDARY)
-            y -= 0.06
-        _add_footer(fig, generated_date)
-        pdf.savefig(fig)
-        plt.close(fig)
+    story.append(Spacer(1, 12))
+    story.append(_section_title("Key Observations"))
+    for cut in ["total", "mandoli", "gandhinagar"]:
+        metrics = metrics_by_cut[cut]
+        obs = (
+            f"{cut.title()}: {metrics.structure_type}, "
+            f"Top-3 share {metrics.top_3_share_sum:.1f}%, "
+            f"Weighted CAGR {metrics.weighted_cagr*100:.1f}%."
+        )
+        story.append(_paragraph(obs))
 
+    story.append(Spacer(1, 12))
+    story.append(_paragraph(f"Generated on {date.today().isoformat()}"))
+
+    doc.build(story)
     buffer.seek(0)
     return buffer.read()

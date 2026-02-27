@@ -129,7 +129,7 @@ def render_snapshot(cut: str):
 
     short_labels = [short_label(s) for s in labels]
     theme_name = "dark" if dark_mode else "light"
-    chart = plotly_snapshot_chart(short_labels, values, theme_name)
+    chart = plotly_snapshot_chart(short_labels, values, theme_name, hover_labels=labels, highlight_index=0)
     st.plotly_chart(chart, use_container_width=True, config={"displayModeBar": False})
 
     metric_cols = st.columns(4)
@@ -222,7 +222,10 @@ else:
                     series_pdf,
                     structural_tables,
                 )
-                st.session_state["pdf_bytes"] = pdf_bytes
+                if not pdf_bytes:
+                    st.error("PDF generation failed: empty output.")
+                else:
+                    st.session_state["pdf_bytes"] = pdf_bytes
             except Exception as exc:
                 st.error(f"PDF generation failed: {exc}")
 
