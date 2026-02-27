@@ -4,10 +4,18 @@
   --divider: #E5E7EB;
   --text-primary: #111827;
   --text-secondary: #6B7280;
-  --accent-blue: #2563EB;
-  --positive: #059669;
-  --negative: #DC2626;
-  --grid-light: #E5E7EB;
+  --accent: #2563EB;
+  --grid: #E5E7EB;
+}
+
+.theme-dark {
+  --bg-main: #0B1220;
+  --card-bg: #0F172A;
+  --divider: #1F2937;
+  --text-primary: #F9FAFB;
+  --text-secondary: #9CA3AF;
+  --accent: #60A5FA;
+  --grid: #1F2937;
 }
 
 html, body, [class*="css"] {
@@ -22,12 +30,12 @@ html, body, [class*="css"] {
 
 .main .block-container {
   max-width: 1100px;
-  padding-top: 16px;
+  padding-top: 12px;
   padding-left: 12px;
   padding-right: 12px;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4, h5, h6, p, span, label, div, td, th {
   color: var(--text-primary);
 }
 
@@ -42,7 +50,7 @@ h3 { font-size: 15px; font-weight: 500; }
 .section-title {
   font-size: 18px;
   font-weight: 600;
-  margin: 24px 0 12px 0;
+  margin: 16px 0 12px 0;
 }
 
 .card {
@@ -50,7 +58,7 @@ h3 { font-size: 15px; font-weight: 500; }
   border: 1px solid var(--divider);
   border-radius: 8px;
   padding: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .metric-row {
@@ -76,8 +84,8 @@ h3 { font-size: 15px; font-weight: 500; }
   display: inline-block;
   font-size: 12px;
   font-weight: 600;
-  color: white;
-  background: var(--accent-blue);
+  color: #FFFFFF;
+  background: var(--accent);
   padding: 2px 6px;
   border-radius: 6px;
 }
@@ -103,10 +111,14 @@ h3 { font-size: 15px; font-weight: 500; }
 }
 
 .subtle-highlight {
-  color: var(--accent-blue);
+  color: var(--accent);
   font-weight: 600;
 }
 
 .radio-group label {
   font-size: 13px;
+}
+
+.plotly-chart, .stPlotlyChart {
+  background: transparent !important;
 }
