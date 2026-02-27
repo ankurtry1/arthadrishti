@@ -1,0 +1,31 @@
+chapter_classification:
+  "01-15": primary_raw
+  "21": processed_food
+  "25-27": minerals_energy
+  "39": plastics
+  "52-63": textiles
+  "72-73": metals
+  "84": machinery
+  "85": electrical
+  "default": other
+
+sector_types:
+  primary_raw: primary
+  processed_food: manufacturing
+  minerals_energy: primary
+  plastics: manufacturing
+  textiles: manufacturing
+  metals: manufacturing
+  machinery: manufacturing
+  electrical: manufacturing
+  other: other
+
+clusters:
+  food:
+    chapters: ["11", "15", "21"]
+  steel_machinery:
+    chapters: ["72", "73", "84"]
+  textiles:
+    chapters: ["52", "54", "60", "61", "62"]
+  electrical:
+    chapters: ["85"]
