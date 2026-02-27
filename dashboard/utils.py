@@ -162,11 +162,10 @@ def plotly_snapshot_chart(labels: List[str], values: List[float], theme: str = "
         fig.update_layout(template="plotly_white", height=260, margin=dict(l=160, r=16, t=8, b=24))
 
     fig.update_xaxes(
-        title_text="Share %",
+        title=dict(text="Share %", font=dict(color=text_secondary)),
         gridcolor=grid,
         zeroline=False,
         tickfont=dict(color=text_secondary),
-        titlefont=dict(color=text_secondary),
     )
     fig.update_yaxes(
         tickfont=dict(color=text_primary),
@@ -204,10 +203,9 @@ def plotly_compare_chart(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         xaxis=dict(
-            title=xaxis_title,
+            title=dict(text=xaxis_title, font=dict(color=theme["text_secondary"], size=11)),
             gridcolor=theme["grid"],
             tickfont=dict(color=theme["text_secondary"], size=11),
-            titlefont=dict(color=theme["text_secondary"], size=11),
         ),
         yaxis=dict(
             tickfont=dict(color=theme["text_primary"], size=11),
@@ -235,10 +233,9 @@ def plotly_share_chart(labels: List[str], values: List[float], theme: Dict[str, 
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         xaxis=dict(
-            title="Share %",
+            title=dict(text="Share %", font=dict(color=theme["text_secondary"], size=11)),
             gridcolor=theme["grid"],
             tickfont=dict(color=theme["text_secondary"], size=11),
-            titlefont=dict(color=theme["text_secondary"], size=11),
         ),
         yaxis=dict(
             tickfont=dict(color=theme["text_primary"], size=11),
