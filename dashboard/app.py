@@ -30,6 +30,8 @@ from utils import (
     plotly_share_chart,
     plotly_snapshot_chart,
     plotly_trend_chart,
+    EXPLAINERS,
+    short_label,
 )
 
 with open(BASE_DIR / "style.css", "r", encoding="utf-8") as f:
@@ -62,6 +64,28 @@ theme = {
     "accent": "#60A5FA" if dark_mode else "#2563EB",
     "grid": "#1F2937" if dark_mode else "#E5E7EB",
 }
+
+
+def render_info(key: str):
+    explainer = EXPLAINERS.get(key)
+    if not explainer:
+        return
+    if hasattr(st, "popover"):
+        with st.popover("ⓘ"):
+            st.markdown(f"**{explainer['title']}**")
+            st.markdown("\n".join([f"- {line}" for line in explainer["lines"]]))
+    else:
+        with st.expander("ⓘ"):
+            st.markdown(f"**{explainer['title']}**")
+            st.markdown("\n".join([f"- {line}" for line in explainer["lines"]]))
+
+
+def render_metric(container, label: str, value: str, explainer_key: str):
+    c1, c2 = container.columns([0.85, 0.15])
+    with c1:
+        st.markdown(f"<div class='metric'><strong>{value}</strong>{label}</div>", unsafe_allow_html=True)
+    with c2:
+        render_info(explainer_key)
 
 # Health check for data files
 required_files = [
@@ -97,19 +121,30 @@ def render_snapshot(cut: str):
 
     summary = summaries[cut]
 
-    chart = plotly_snapshot_chart(labels, values, theme)
+    chart_header = st.columns([0.92, 0.08])
+    with chart_header[0]:
+        st.markdown("<div class='body-primary'><strong>Top Chapters (Share)</strong></div>", unsafe_allow_html=True)
+    with chart_header[1]:
+        render_info("chart_share")
+
+    short_labels = [short_label(s) for s in labels]
+    theme_name = "dark" if dark_mode else "light"
+    chart = plotly_snapshot_chart(short_labels, values, theme_name)
     st.plotly_chart(chart, use_container_width=True, config={"displayModeBar": False})
+
+    metric_cols = st.columns(4)
+    render_metric(metric_cols[0], "Growth", f"{growth:.1f}%", "growth")
+    render_metric(metric_cols[1], "Concentration", f"{concentration:.1f}%", "concentration")
+    render_metric(metric_cols[2], "Volatility", f"{volatility:.1f}%", "volatility")
+    render_metric(metric_cols[3], "Structure", metrics.structure_type, "structure")
+
     st.markdown(
-        f"""
-        <div class='metric-row'>
-          <div class='metric'><strong>{growth:.1f}%</strong>Growth</div>
-          <div class='metric'><strong>{concentration:.1f}%</strong>Concentration</div>
-          <div class='metric'><strong>{volatility:.1f}%</strong>Volatility</div>
-          <div class='metric'><strong>{metrics.structure_type}</strong>Structure</div>
-        </div>
-        <div class='body-secondary' style='margin-bottom:8px;'>Top chapter <span class='chip'>#1</span> {top_chapter}</div>
-        <div class='body-secondary' style='white-space:pre-line;'>{summary}</div>
-        """,
+        f"<div class='body-secondary' style='margin-top:8px;margin-bottom:8px;'>"
+        f"Top chapter <span class='chip'>#1</span> {top_chapter}</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div class='body-secondary' style='white-space:pre-line;'>{summary}</div>",
         unsafe_allow_html=True,
     )
 
@@ -126,7 +161,11 @@ with tabs[2]:
 st.markdown("</div>", unsafe_allow_html=True)
 
 # Section 2
-st.markdown("<div class='section-title'>Divergence & Specialization</div>", unsafe_allow_html=True)
+header_cols = st.columns([0.92, 0.08])
+with header_cols[0]:
+    st.markdown("<div class='section-title'>Divergence & Specialization</div>", unsafe_allow_html=True)
+with header_cols[1]:
+    render_info("compare_toggle")
 metric_choice = st.radio("", ["Share", "Growth", "Volatility"], horizontal=True, index=0)
 
 metric_col = {
