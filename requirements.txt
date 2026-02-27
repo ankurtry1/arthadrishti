@@ -1,7 +1,7 @@
-streamlit
-pandas
-plotly
-reportlab
-matplotlib
-jinja2
-numpy
+streamlit==1.42.0
+pandas==2.2.2
+plotly==5.22.0
+numpy==2.0.2
+matplotlib==3.9.0
+reportlab==4.2.2
+jinja2==3.1.4
