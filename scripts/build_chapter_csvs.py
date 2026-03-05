@@ -26,6 +26,7 @@ OUT_DIR = Path("Data/Cleaned data/Chapter data")
 OUT_COLS = [
     "S.No.",
     "Chapter",
+    "HSN Chapter",
     "No. of GSTNs_z1",
     "Taxable value 24_25_z2",
     "YoY growth_z3",
@@ -90,6 +91,7 @@ def aggregate_file(in_path: Path, out_path: Path) -> Tuple[pd.DataFrame, Dict[st
     z1_col = find_column(df.columns, "No. of GSTNs_z1")
     z2_col = find_column(df.columns, "Taxable value 24_25_z2")
     z3_col = find_column(df.columns, "YoY growth_z3")
+    hsn_ch_col = next((c for c in df.columns if norm_header(c) == "hsn chapter"), None)
 
     df = df.copy()
     df["Chapter"] = ensure_chapter(df, hsn_col)
@@ -99,6 +101,10 @@ def aggregate_file(in_path: Path, out_path: Path) -> Tuple[pd.DataFrame, Dict[st
     df["z1_num"] = parse_number_series(df[z1_col]).fillna(0)
     df["z2_num"] = parse_number_series(df[z2_col]).fillna(0)
     df["z3_num"] = parse_number_series(df[z3_col])
+    if hsn_ch_col:
+        df["hsn_chapter_txt"] = df[hsn_ch_col].astype(str).str.strip().replace({"nan": "", "None": ""})
+    else:
+        df["hsn_chapter_txt"] = ""
 
     grouped = df.groupby("Chapter", dropna=False)
 
@@ -108,6 +114,31 @@ def aggregate_file(in_path: Path, out_path: Path) -> Tuple[pd.DataFrame, Dict[st
             "Taxable value 24_25_z2": ("z2_num", "sum"),
         }
     ).reset_index()
+
+    # Representative HSN Chapter label per chapter:
+    # use most frequent valid non-empty label, else fallback to \"Chapter {code}\".
+    def sanitize_hsn_chapter_label(text: str) -> str:
+        s = str(text or "").strip()
+        if not s:
+            return ""
+        # Ignore placeholder-like numeric strings such as 0 or 0.0.
+        if s.replace(".", "", 1).isdigit():
+            return ""
+        return s
+
+    label_rows = []
+    for chapter_code, g in df.groupby("Chapter", dropna=False):
+        vals = g["hsn_chapter_txt"].astype(str).str.strip().replace({"nan": "", "None": ""})
+        vals = vals.map(sanitize_hsn_chapter_label)
+        vals = vals[vals != ""]
+        if len(vals):
+            label = vals.value_counts().index[0]
+        else:
+            label = f"Chapter {chapter_code}"
+        label_rows.append({"Chapter": chapter_code, "HSN Chapter": label})
+
+    hsn_ch = pd.DataFrame(label_rows)
+    out = out.merge(hsn_ch, on="Chapter", how="left")
 
     # Weighted YoY: sum(z3*z2)/sum(z2), only where z3 is present.
     yoy_num = grouped.apply(lambda g: (g.loc[g["z3_num"].notna(), "z3_num"] * g.loc[g["z3_num"].notna(), "z2_num"]).sum())

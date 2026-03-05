@@ -14,6 +14,7 @@ let state = {
   labelLayer: null,
   dataIndex: {}, // dataIndex[DIVISION][CHAPTER_STR] = { z1, z2, z3 }
   chapters: [],
+  chapterLabel: {},
   schema: null,
   featureLayers: [],
   chapterRangeText: "",
@@ -41,11 +42,12 @@ function detectSchema(rows) {
   const keys = Object.keys(first);
 
   const chapterKey = pickKey(keys, ["chapter"]) || "Chapter";
+  const hsnChapterKey = pickKey(keys, ["hsn", "chapter"]) || "HSN Chapter";
   const z1Key = pickKey(keys, ["gstns", "z1"]) || "No. of GSTNs_z1";
   const z2Key = pickKey(keys, ["taxable", "z2"]) || pickKey(keys, ["taxable", "24_25"]) || "Taxable value 24_25_z2";
   const z3Key = pickKey(keys, ["yoy", "z3"]) || pickKey(keys, ["yoy", "growth"]) || "YoY growth_z3";
 
-  return { chapterKey, z1Key, z2Key, z3Key };
+  return { chapterKey, hsnChapterKey, z1Key, z2Key, z3Key };
 }
 
 function canonDivisionName(s) {
@@ -126,12 +128,13 @@ function loadCSV(url) {
 }
 
 function buildIndex(rows, divisionName) {
-  const { chapterKey, z1Key, z2Key, z3Key } = state.schema;
+  const { chapterKey, hsnChapterKey, z1Key, z2Key, z3Key } = state.schema;
   const division = canonDivisionName(divisionName);
 
   for (const r of rows) {
     const chapter = parseChapter(r[chapterKey]);
     if (!chapter) continue;
+    const hsnChapter = String(r[hsnChapterKey] || "").trim();
 
     const z1 = parseNumber(r[z1Key]);
     const z2 = parseNumber(r[z2Key]);
@@ -140,6 +143,15 @@ function buildIndex(rows, divisionName) {
     if (!state.dataIndex[division]) state.dataIndex[division] = {};
     state.dataIndex[division][chapter] = { z1, z2, z3 };
     state.chapters.push(chapter);
+    const fallback = `Chapter ${chapter}`;
+    if (!state.chapterLabel[chapter]) {
+      state.chapterLabel[chapter] = hsnChapter || fallback;
+    } else if (
+      hsnChapter &&
+      state.chapterLabel[chapter].trim().toLowerCase() === fallback.toLowerCase()
+    ) {
+      state.chapterLabel[chapter] = hsnChapter;
+    }
   }
 }
 
@@ -158,7 +170,7 @@ function buildChapterDropdown() {
   for (const chapter of state.chapters) {
     const opt = document.createElement("option");
     opt.value = chapter;
-    opt.textContent = `Chapter: ${chapter}`;
+    opt.textContent = state.chapterLabel[chapter] || `Chapter ${chapter}`;
     sel.appendChild(opt);
   }
 
