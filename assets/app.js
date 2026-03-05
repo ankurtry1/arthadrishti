@@ -211,6 +211,21 @@ function divisionValue(division, hsn, metric){
   return (v === undefined ? null : v);
 }
 
+function percentile(sortedVals, p){
+  if (!sortedVals.length) return null;
+  if (sortedVals.length === 1) return sortedVals[0];
+  const idx = (sortedVals.length - 1) * p;
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  if (lo === hi) return sortedVals[lo];
+  const w = idx - lo;
+  return sortedVals[lo] * (1 - w) + sortedVals[hi] * w;
+}
+
+function signedLog(v){
+  return Math.sign(v) * Math.log1p(Math.abs(v));
+}
+
 function tooltipHTML(division){
   const v = divisionValue(division, state.hsn, state.metric);
   const label = metricLabel(state.metric);
@@ -250,13 +265,15 @@ function initMap(){
       state.featureLayers.push(layer);
 
       // Permanent division labels (overlay)
-      const center = layer.getBounds().getCenter();
-      const icon = L.divIcon({
-        className: "",
-        html: `<div class="div-label">${division}</div>`,
-        iconSize: [0,0],
-      });
-      L.marker(center, { icon, interactive: false }).addTo(state.labelLayer);
+      if (division === "MANDOLI" || division === "GANDHINAGAR"){
+        const center = layer.getBounds().getCenter();
+        const icon = L.divIcon({
+          className: "",
+          html: `<div class="div-label">${division}</div>`,
+          iconSize: [0,0],
+        });
+        L.marker(center, { icon, interactive: false }).addTo(state.labelLayer);
+      }
     }
   }).addTo(map);
 }
@@ -279,9 +296,37 @@ function colorForMetric(v, metric){
     return chroma.scale(["#f1f5f9", "#1e3a8a"]).mode("lab")(t).hex();
   }
 
-  // z3 diverging around 0
-  const clamp = Math.max(-0.5, Math.min(0.5, v));
-  const t = (clamp + 0.5) / 1.0;
+  // z3 robust diverging normalization around 0
+  const vals = Object.keys(state.dataIndex)
+    .map(d => divisionValue(d, state.hsn, "z3"))
+    .filter(x => x !== null && x !== undefined && Number.isFinite(x));
+
+  if (!vals.length) return "#e2e8f0";
+
+  let lo;
+  let hi;
+
+  if (vals.length >= 3){
+    const sorted = [...vals].sort((a,b) => a - b);
+    lo = percentile(sorted, 0.05);
+    hi = percentile(sorted, 0.95);
+  } else {
+    const maxAbs = Math.max(...vals.map(x => Math.abs(x)));
+    lo = -maxAbs;
+    hi = maxAbs;
+  }
+
+  let y = signedLog(v);
+  let yLo = signedLog(lo);
+  let yHi = signedLog(hi);
+
+  if (!(Number.isFinite(yLo) && Number.isFinite(yHi)) || yHi === yLo){
+    return chroma.scale(["#9f1239", "#f8fafc", "#0f766e"]).mode("lab")(0.5).hex();
+  }
+
+  let t = (y - yLo) / (yHi - yLo);
+  if (!Number.isFinite(t)) t = 0.5;
+  t = Math.max(0, Math.min(1, t));
 
   return chroma.scale(["#9f1239", "#f8fafc", "#0f766e"]).mode("lab")(t).hex();
 }
