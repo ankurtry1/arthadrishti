@@ -17,6 +17,7 @@ let state = {
   schema: null,
   featureLayers: [],
   chapterRangeText: "",
+  lb: { div: "MANDOLI", expanded: false },
 };
 
 function normKey(s) {
@@ -55,7 +56,8 @@ function canonDivisionName(s) {
 
   if (x === "GANDHI NAGAR") return "GANDHINAGAR";
   if (x === "GANDHINAGAR") return "GANDHINAGAR";
-  return x;
+  if (x === "DELHI EAST") return "DELHIEAST";
+  return x.replace(/\s+/g, "");
 }
 
 function parseChapter(raw) {
@@ -102,6 +104,15 @@ function metricFormatted(metric, v) {
   return formatINR(v);
 }
 
+function chapterSelectEl() {
+  return document.getElementById("chapterSelect");
+}
+
+function syncChapterSelect() {
+  const sel = chapterSelectEl();
+  if (sel) sel.value = state.chapter || "";
+}
+
 function loadCSV(url) {
   return new Promise((resolve, reject) => {
     Papa.parse(url, {
@@ -133,7 +144,7 @@ function buildIndex(rows, divisionName) {
 }
 
 function buildChapterDropdown() {
-  const sel = document.getElementById("chapterSelect");
+  const sel = chapterSelectEl();
   sel.innerHTML = "";
 
   if (!state.chapters.length) {
@@ -200,6 +211,82 @@ function tooltipHTML(division) {
       Chapter: <b>${chapterText}</b> • ${label}: <b>${val}</b>
     </div>
   `;
+}
+
+function getLeaders(division, metric, topN) {
+  const rows = Object.entries(state.dataIndex[division] || {})
+    .map(([chapter, vals]) => ({ chapter, value: vals?.[metric] }))
+    .filter((r) => Number.isFinite(Number(r.value)))
+    .sort((a, b) => Number(b.value) - Number(a.value))
+    .slice(0, topN);
+  return rows;
+}
+
+function leaderboardValue(metric, value) {
+  if (metric === "z3") return formatPct(value);
+  if (metric === "z1") return formatInt(value);
+  return formatINR(value);
+}
+
+function leaderboardRowsHTML(rows, metric) {
+  if (!rows.length) {
+    return `<div class="lb-row"><span class="lb-rank">-</span><span class="lb-ch">No data</span><span class="lb-val">—</span></div>`;
+  }
+  return rows
+    .map(
+      (r, i) =>
+        `<button class="lb-row" data-ch="${r.chapter}">
+          <span class="lb-rank">${i + 1}</span>
+          <span class="lb-ch">Chapter ${r.chapter}</span>
+          <span class="lb-val">${leaderboardValue(metric, r.value)}</span>
+        </button>`
+    )
+    .join("");
+}
+
+function bindLeaderboardRowClicks() {
+  document.querySelectorAll(".lb-row[data-ch]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      state.chapter = String(btn.dataset.ch || "");
+      syncChapterSelect();
+      render();
+    });
+  });
+}
+
+function renderLeaderboard() {
+  const division = state.lb.div;
+  const valueLeaders = getLeaders(division, "z2", 5);
+  const growthLeaders = getLeaders(division, "z3", 5);
+
+  const valueEl = document.getElementById("lbValue");
+  const growthEl = document.getElementById("lbGrowth");
+  if (!valueEl || !growthEl) return;
+
+  valueEl.innerHTML = leaderboardRowsHTML(valueLeaders, "z2");
+  growthEl.innerHTML = leaderboardRowsHTML(growthLeaders, "z3");
+  bindLeaderboardRowClicks();
+}
+
+function bindLeaderboardUI() {
+  const tabs = document.querySelectorAll(".lb-tab");
+  tabs.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      tabs.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.lb.div = String(btn.dataset.div || "MANDOLI");
+      renderLeaderboard();
+    });
+  });
+
+  const panel = document.getElementById("leaderboard");
+  const toggle = document.getElementById("lbToggle");
+  if (panel && toggle) {
+    toggle.addEventListener("click", () => {
+      state.lb.expanded = !state.lb.expanded;
+      panel.classList.toggle("expanded", state.lb.expanded);
+    });
+  }
 }
 
 function initMap() {
@@ -280,7 +367,7 @@ function colorForMetric(v, metric) {
   }
 
   // z3 sign-aware coloring
-  const vals = ["MANDOLI", "GANDHINAGAR", "DELHI EAST"]
+  const vals = ["MANDOLI", "GANDHINAGAR", "DELHIEAST"]
     .map((d) => divisionValue(d, state.chapter, "z3"))
     .filter((x) => x !== null && x !== undefined && Number.isFinite(Number(x)))
     .map(Number);
@@ -356,6 +443,8 @@ function render() {
      <div>GSTNs: <b>${formatInt(g.z1)}</b></div>
      <div>Value: <b>${formatINR(g.z2)}</b></div>
      <div>YoY: <b>${formatPct(g.z3)}</b></div>`;
+
+  renderLeaderboard();
 }
 
 function bindUI() {
@@ -398,6 +487,7 @@ async function init() {
   buildChapterDropdown();
   initMap();
   bindUI();
+  bindLeaderboardUI();
   render();
 }
 

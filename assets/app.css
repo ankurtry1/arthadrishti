@@ -112,3 +112,156 @@ body{
   letter-spacing: .2px;
   white-space: nowrap;
 }
+
+.leaderboard{
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 20;
+  background: rgba(255,255,255,.97);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  height: 190px;
+  transition: height .2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.leaderboard.expanded{
+  height: 65vh;
+}
+
+.lb-handle{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+}
+
+.lb-grab{
+  width:36px;
+  height:4px;
+  border-radius:999px;
+  background:#cbd5e1;
+}
+
+.lb-title{
+  font-size:13px;
+  font-weight:700;
+  color:#0b1220;
+  flex:1;
+}
+
+.lb-toggle{
+  border:1px solid var(--border);
+  background:#fff;
+  border-radius:999px;
+  width:28px;
+  height:28px;
+  cursor:pointer;
+}
+
+.lb-tabs{
+  display:flex;
+  gap:8px;
+  padding:10px 12px;
+}
+
+.lb-tab{
+  border:1px solid var(--border);
+  background:#fff;
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:12px;
+  color:var(--muted);
+  cursor:pointer;
+}
+
+.lb-tab.active{
+  background:#0b1220;
+  color:#fff;
+  border-color:#0b1220;
+}
+
+.lb-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+  padding:0 12px 12px;
+  height: calc(100% - 90px);
+}
+
+.lb-col{
+  min-width:0;
+  display:grid;
+  grid-template-rows:auto 1fr;
+  gap:8px;
+}
+
+.lb-col-title{
+  font-size:12px;
+  color:#475569;
+  font-weight:700;
+}
+
+.lb-table{
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:auto;
+  background:#fff;
+}
+
+.lb-row{
+  width:100%;
+  border:0;
+  border-bottom:1px solid #edf2f7;
+  background:#fff;
+  text-align:left;
+  padding:9px 10px;
+  cursor:pointer;
+  display:grid;
+  grid-template-columns: 20px 1fr auto;
+  gap:8px;
+  align-items:center;
+  font-size:12px;
+}
+
+.lb-row:last-child{
+  border-bottom:0;
+}
+
+.lb-row:hover{
+  background:#f8fafc;
+}
+
+.lb-rank{
+  color:#64748b;
+  font-weight:700;
+}
+
+.lb-ch{
+  color:#0b1220;
+  font-weight:600;
+}
+
+.lb-val{
+  color:#0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 900px){
+  .leaderboard{
+    left:auto;
+    right:16px;
+    top:96px;
+    bottom:16px;
+    width:360px;
+    height:auto;
+  }
+  .lb-toggle{
+    display:none;
+  }
+}

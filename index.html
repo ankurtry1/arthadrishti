@@ -27,6 +27,31 @@
       <div class="kpi" id="kpiMandoli"></div>
       <div class="kpi" id="kpiGandhi"></div>
     </section>
+
+    <section class="leaderboard" id="leaderboard">
+      <div class="lb-handle">
+        <div class="lb-grab"></div>
+        <div class="lb-title">Leaderboard</div>
+        <button class="lb-toggle" id="lbToggle" aria-label="Expand">⇵</button>
+      </div>
+
+      <div class="lb-tabs" id="lbTabs">
+        <button class="lb-tab active" data-div="MANDOLI">Mandoli</button>
+        <button class="lb-tab" data-div="GANDHINAGAR">Gandhinagar</button>
+        <button class="lb-tab" data-div="DELHIEAST">Delhi East</button>
+      </div>
+
+      <div class="lb-grid">
+        <div class="lb-col">
+          <div class="lb-col-title">Value Leaders</div>
+          <div class="lb-table" id="lbValue"></div>
+        </div>
+        <div class="lb-col">
+          <div class="lb-col-title">Growth Leaders</div>
+          <div class="lb-table" id="lbGrowth"></div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
