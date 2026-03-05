@@ -65,8 +65,9 @@ body{
 }
 
 .chip.active{
-  color:var(--text);
-  border-color:#cbd5e1;
+  background:#0b1220;
+  color:#fff;
+  border-color:#0b1220;
   box-shadow: var(--shadow);
 }
 

@@ -236,19 +236,34 @@ function initMap() {
 
 function colorForMetric(v, metric) {
   if (v === null || v === undefined || Number.isNaN(v)) return "#e2e8f0";
+  const clamp01 = (x) => Math.max(0, Math.min(1, x));
 
   if (metric === "z2") {
-    // Keep z2 behavior unchanged: compare Mandoli vs Gandhinagar for selected chapter.
+    // Compare Mandoli vs Gandhinagar for selected chapter, but compress saturation
+    // when values are close to avoid extreme visual contrast.
     const vals = ["MANDOLI", "GANDHINAGAR"]
       .map((d) => divisionValue(d, state.chapter, "z2"))
-      .filter((x) => x !== null && x !== undefined);
+      .filter((x) => x !== null && x !== undefined && Number.isFinite(Number(x)))
+      .map(Number);
 
     if (!vals.length) return "#e2e8f0";
 
     const min = Math.min(...vals);
     const max = Math.max(...vals);
-    const t = max === min ? 0.7 : (v - min) / (max - min);
-    return chroma.scale(["#f1f5f9", "#1e3a8a"]).mode("lab")(t).hex();
+    const ratio = min > 0 ? max / min : Number.POSITIVE_INFINITY;
+    const rawT = max === min ? 0.5 : (Number(v) - min) / (max - min);
+    const t0 = clamp01(rawT);
+
+    let t;
+    if (ratio <= 1.5) {
+      t = 0.45 + 0.40 * t0; // 0.45..0.85
+    } else if (ratio <= 3) {
+      t = 0.25 + 0.65 * t0; // 0.25..0.90
+    } else {
+      t = 0.10 + 0.85 * t0; // 0.10..0.95
+    }
+
+    return chroma.scale(["#f1f5f9", "#1e3a8a"]).mode("lab")(clamp01(t)).hex();
   }
 
   if (metric === "z1") {
@@ -264,37 +279,39 @@ function colorForMetric(v, metric) {
     return chroma.scale(["#f1f5f9", "#1e3a8a"]).mode("lab")(t).hex();
   }
 
-  // z3 robust diverging normalization around 0
-  const vals = Object.keys(state.dataIndex)
+  // z3 sign-aware coloring
+  const vals = ["MANDOLI", "GANDHINAGAR", "DELHI EAST"]
     .map((d) => divisionValue(d, state.chapter, "z3"))
-    .filter((x) => x !== null && x !== undefined && Number.isFinite(x));
+    .filter((x) => x !== null && x !== undefined && Number.isFinite(Number(x)))
+    .map(Number);
 
   if (!vals.length) return "#e2e8f0";
 
-  let lo;
-  let hi;
+  const allPos = vals.every((x) => x >= 0);
+  const allNeg = vals.every((x) => x <= 0);
+  const y = signedLog(Number(v));
+  const yVals = vals.map((x) => signedLog(x));
 
-  if (vals.length >= 3) {
-    const sorted = [...vals].sort((a, b) => a - b);
-    lo = percentile(sorted, 0.05);
-    hi = percentile(sorted, 0.95);
-  } else {
-    const maxAbs = Math.max(...vals.map((x) => Math.abs(x)));
-    lo = -maxAbs;
-    hi = maxAbs;
+  if (allPos) {
+    const minY = Math.min(...yVals);
+    const maxY = Math.max(...yVals);
+    const t = maxY === minY ? 0.7 : (y - minY) / (maxY - minY);
+    return chroma.scale(["#f8fafc", "#0f766e"]).mode("lab")(clamp01(t)).hex();
   }
 
-  const y = signedLog(v);
-  const yLo = signedLog(lo);
-  const yHi = signedLog(hi);
+  if (allNeg) {
+    const minY = Math.min(...yVals); // most negative
+    const maxY = Math.max(...yVals); // closest to 0
+    const t = maxY === minY ? 0.7 : (y - minY) / (maxY - minY);
+    return chroma.scale(["#9f1239", "#f8fafc"]).mode("lab")(clamp01(t)).hex();
+  }
 
-  if (!(Number.isFinite(yLo) && Number.isFinite(yHi)) || yHi === yLo) {
+  const maxAbs = Math.max(...yVals.map((x) => Math.abs(x)));
+  if (!Number.isFinite(maxAbs) || maxAbs === 0) {
     return chroma.scale(["#9f1239", "#f8fafc", "#0f766e"]).mode("lab")(0.5).hex();
   }
 
-  let t = (y - yLo) / (yHi - yLo);
-  if (!Number.isFinite(t)) t = 0.5;
-  t = Math.max(0, Math.min(1, t));
+  const t = clamp01((y + maxAbs) / (2 * maxAbs));
 
   return chroma.scale(["#9f1239", "#f8fafc", "#0f766e"]).mode("lab")(t).hex();
 }
