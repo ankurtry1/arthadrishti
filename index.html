@@ -15,6 +15,7 @@
       <div class="chips">
         <button class="chip active" data-metric="z2">Supply Value</button>
         <button class="chip" data-metric="z3">YoY Growth</button>
+        <button class="chip" id="lbOpen" data-action="leaderboard">Leaderboard</button>
       </div>
     </div>
     <div class="subnote" id="subnote"></div>
@@ -28,27 +29,30 @@
       <div class="kpi" id="kpiGandhi"></div>
     </section>
 
-    <section class="leaderboard" id="leaderboard">
-      <div class="lb-handle">
-        <div class="lb-grab"></div>
-        <div class="lb-title">Leaderboard</div>
-        <button class="lb-toggle" id="lbToggle" aria-label="Expand">⇵</button>
-      </div>
-
-      <div class="lb-tabs" id="lbTabs">
-        <button class="lb-tab active" data-div="MANDOLI">Mandoli</button>
-        <button class="lb-tab" data-div="GANDHINAGAR">Gandhinagar</button>
-        <button class="lb-tab" data-div="DELHIEAST">Delhi East</button>
-      </div>
-
-      <div class="lb-grid">
-        <div class="lb-col">
-          <div class="lb-col-title">Value Leaders</div>
-          <div class="lb-table" id="lbValue"></div>
+    <div class="lb-backdrop" id="lbBackdrop" hidden></div>
+    <section class="lb-modal" id="lbModal" hidden aria-hidden="true" role="dialog" aria-label="Leaderboard">
+      <div class="lb-modal-card" id="lbCard">
+        <div class="lb-handle">
+          <div class="lb-grab"></div>
+          <div class="lb-title">Leaderboard</div>
+          <button class="lb-close" id="lbClose" aria-label="Close">✕</button>
         </div>
-        <div class="lb-col">
-          <div class="lb-col-title">Growth Leaders</div>
-          <div class="lb-table" id="lbGrowth"></div>
+
+        <div class="lb-tabs" id="lbTabs">
+          <button class="lb-tab active" data-div="MANDOLI">Mandoli</button>
+          <button class="lb-tab" data-div="GANDHINAGAR">Gandhinagar</button>
+          <button class="lb-tab" data-div="DELHIEAST">Delhi East</button>
+        </div>
+
+        <div class="lb-grid">
+          <div class="lb-col">
+            <div class="lb-col-title">Value Leaders</div>
+            <div class="lb-table" id="lbValue"></div>
+          </div>
+          <div class="lb-col">
+            <div class="lb-col-title">Growth Leaders</div>
+            <div class="lb-table" id="lbGrowth"></div>
+          </div>
         </div>
       </div>
     </section>

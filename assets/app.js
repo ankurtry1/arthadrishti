@@ -17,7 +17,7 @@ let state = {
   schema: null,
   featureLayers: [],
   chapterRangeText: "",
-  lb: { div: "MANDOLI", expanded: false },
+  lb: { div: "MANDOLI", open: false },
 };
 
 function normKey(s) {
@@ -279,13 +279,57 @@ function bindLeaderboardUI() {
     });
   });
 
-  const panel = document.getElementById("leaderboard");
-  const toggle = document.getElementById("lbToggle");
-  if (panel && toggle) {
-    toggle.addEventListener("click", () => {
-      state.lb.expanded = !state.lb.expanded;
-      panel.classList.toggle("expanded", state.lb.expanded);
+  const openBtn = document.getElementById("lbOpen");
+  const closeBtn = document.getElementById("lbClose");
+  const backdrop = document.getElementById("lbBackdrop");
+  const modal = document.getElementById("lbModal");
+  const card = document.getElementById("lbCard");
+
+  const setOpen = (open) => {
+    state.lb.open = open;
+    if (!backdrop || !modal) return;
+    if (openBtn) openBtn.classList.toggle("active", open);
+    backdrop.hidden = !open;
+    modal.hidden = !open;
+    modal.setAttribute("aria-hidden", open ? "false" : "true");
+    if (open) {
+      renderLeaderboard();
+    }
+  };
+
+  if (openBtn) {
+    openBtn.addEventListener("click", () => {
+      setOpen(true);
     });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => setOpen(false));
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener("click", () => setOpen(false));
+  }
+
+  if (modal) {
+    modal.addEventListener("click", () => setOpen(false));
+  }
+
+  if (card) {
+    card.addEventListener("click", (e) => e.stopPropagation());
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state.lb.open) {
+      setOpen(false);
+    }
+  });
+
+  // Keep closed by default
+  if (backdrop && modal) {
+    backdrop.hidden = true;
+    modal.hidden = true;
+    modal.setAttribute("aria-hidden", "true");
   }
 }
 
@@ -448,9 +492,9 @@ function render() {
 }
 
 function bindUI() {
-  document.querySelectorAll(".chip").forEach((btn) => {
+  document.querySelectorAll(".chip[data-metric]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".chip").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".chip[data-metric]").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       state.metric = btn.dataset.metric;
       render();

@@ -113,24 +113,33 @@ body{
   white-space: nowrap;
 }
 
-.leaderboard{
+.lb-backdrop{
   position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
-  z-index: 20;
-  background: rgba(255,255,255,.97);
+  inset: 0;
+  background: rgba(15,23,42,.35);
+  backdrop-filter: blur(2px);
+  z-index: 5000;
+}
+
+.lb-modal{
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: end center;
+  z-index: 5100;
+  pointer-events: none;
+}
+
+.lb-modal-card{
+  pointer-events: auto;
+  width: min(920px, calc(100% - 24px));
+  max-height: min(70vh, 720px);
+  margin: 0 12px 12px;
+  background: rgba(255,255,255,.98);
   border: 1px solid var(--border);
   border-radius: 18px;
   box-shadow: var(--shadow);
   overflow: hidden;
-  height: 190px;
-  transition: height .2s ease;
-  backdrop-filter: blur(10px);
-}
-
-.leaderboard.expanded{
-  height: 65vh;
 }
 
 .lb-handle{
@@ -155,12 +164,12 @@ body{
   flex:1;
 }
 
-.lb-toggle{
+.lb-close{
   border:1px solid var(--border);
   background:#fff;
   border-radius:999px;
-  width:28px;
-  height:28px;
+  width:34px;
+  height:34px;
   cursor:pointer;
 }
 
@@ -253,15 +262,30 @@ body{
 }
 
 @media (min-width: 900px){
-  .leaderboard{
-    left:auto;
-    right:16px;
-    top:96px;
-    bottom:16px;
-    width:360px;
-    height:auto;
+  .lb-modal{
+    place-items: start end;
+    padding: 96px 16px 16px 16px;
   }
-  .lb-toggle{
-    display:none;
+  .lb-modal-card{
+    width:420px;
+    max-height: calc(100vh - 120px);
+    margin:0;
+  }
+}
+
+.leaflet-pane,
+.leaflet-control{
+  z-index: 400;
+}
+
+@media (min-width: 900px){
+  .lb-grid{
+    height: calc(100% - 90px);
+  }
+}
+
+@media (max-width: 899px){
+  .lb-grid{
+    height:auto;
   }
 }
