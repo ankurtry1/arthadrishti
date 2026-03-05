@@ -246,12 +246,14 @@ function leaderboardRowsHTML(rows, metric) {
   }
   return rows
     .map(
-      (r, i) =>
-        `<button class="lb-row" data-ch="${r.chapter}">
+      (r, i) => {
+        const label = state.chapterLabel[r.chapter] || `Chapter ${r.chapter}`;
+        return `<button class="lb-row" data-ch="${r.chapter}">
           <span class="lb-rank">${i + 1}</span>
-          <span class="lb-ch">Chapter ${r.chapter}</span>
+          <span class="lb-ch">${label}</span>
           <span class="lb-val">${leaderboardValue(metric, r.value)}</span>
-        </button>`
+        </button>`;
+      }
     )
     .join("");
 }
