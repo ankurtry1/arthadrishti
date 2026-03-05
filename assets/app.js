@@ -369,11 +369,12 @@ async function init() {
   buildIndex(delhiEastRows, "DELHI EAST");
 
   const uniq = Array.from(new Set(state.chapters));
-  uniq.sort((a, b) => Number(a) - Number(b));
+  uniq.sort((a, b) => Number(b) - Number(a));
   state.chapters = uniq;
 
-  const minCh = state.chapters[0] || "—";
-  const maxCh = state.chapters[state.chapters.length - 1] || "—";
+  const chapterNums = state.chapters.map((c) => Number(c)).filter((n) => Number.isFinite(n));
+  const minCh = chapterNums.length ? Math.min(...chapterNums) : "—";
+  const maxCh = chapterNums.length ? Math.max(...chapterNums) : "—";
   state.chapterRangeText = `${minCh} to ${maxCh}`;
   state.chapter = state.chapters[0] || null;
 
