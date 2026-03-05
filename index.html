@@ -10,18 +10,14 @@
 </head>
 <body>
   <header class="topbar">
-    <select id="hsnSelect" class="select"></select>
-
-    <div class="tabs">
-      <button class="tab active" data-region="MANDOLI">Mandoli (A)</button>
-      <button class="tab" data-region="GANDHINAGAR">Gandhinagar (B)</button>
-      <button class="tab" data-region="DELHI_EAST">Delhi East Zone (C)</button>
+    <div class="row">
+      <select id="hsnSelect" class="select"></select>
+      <div class="chips">
+        <button class="chip active" data-metric="z2">Supply Value</button>
+        <button class="chip" data-metric="z3">YoY Growth</button>
+      </div>
     </div>
-
-    <div class="chips">
-      <button class="chip active" data-metric="z2">Supply Value</button>
-      <button class="chip" data-metric="z3">YoY Growth</button>
-    </div>
+    <div class="subnote" id="subnote"></div>
   </header>
 
   <main>
