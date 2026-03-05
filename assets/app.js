@@ -289,6 +289,7 @@ function bindLeaderboardUI() {
     state.lb.open = open;
     if (!backdrop || !modal) return;
     if (openBtn) openBtn.classList.toggle("active", open);
+    document.body.style.overflow = open ? "hidden" : "";
     backdrop.hidden = !open;
     modal.hidden = !open;
     modal.setAttribute("aria-hidden", open ? "false" : "true");
@@ -299,7 +300,7 @@ function bindLeaderboardUI() {
 
   if (openBtn) {
     openBtn.addEventListener("click", () => {
-      setOpen(true);
+      setOpen(!state.lb.open);
     });
   }
 
