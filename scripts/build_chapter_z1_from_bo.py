@@ -42,7 +42,10 @@ GSTIN_REGEX = re.compile(r"^[A-Z0-9]{15}$")
 def find_header_row(df: pd.DataFrame) -> int:
     for i, row in df.iterrows():
         values = row.astype(str).str.lower().tolist()
-        if any(any(cand in v for cand in GSTIN_CANDIDATES + HSN_CANDIDATES) for v in values):
+        if any(
+            any(cand in str(v) for cand in GSTIN_CANDIDATES + HSN_CANDIDATES)
+            for v in values
+        ):
             return i
     raise ValueError("Could not locate header row containing GSTIN/HSN columns.")
 
