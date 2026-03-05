@@ -1,8 +1,8 @@
 const PATHS = {
-  geo: "/data/GST East Delhi Divisions.geojson",
-  mandoli: "/data/Mandoli.csv",
-  gandhi: "/data/Gandhinagar.csv",
-  delhiEast: "/data/Delhi East.csv",
+  geo: "/Data/Raw%20data/GST%20East%20Delhi%20Divisions.geojson",
+  mandoli: "/Data/Cleaned%20data/Mandoli.csv",
+  gandhi: "/Data/Cleaned%20data/Gandhinagar.csv",
+  delhiEast: "/Data/Cleaned%20data/Delhi%20East.csv",
 };
 
 let state = {
